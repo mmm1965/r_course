@@ -44,7 +44,7 @@ library(AER) # работа с инструментальными перемен
 Правильно укажите путь к данным относительно `.Rmd`-файла:
 
 ```{r}
-pulse <- import('___/pulse.txt')
+pulse <- import('data/pulse.txt')
 skim(pulse)
 ```
 
@@ -56,6 +56,8 @@ skim(pulse)
 ```{r}
 pulse_fct <- pulse %>%
   mutate_at(vars(-Weight, -Height, -Age, -Pulse1, -Pulse2), factor)
+pulse_fct <-pulse %>%
+ mutate_at(vars(Age, Alcohol), factor)  
 ```
 
 И теперь можно приступать к регрессиям.
