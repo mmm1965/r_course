@@ -127,7 +127,7 @@ coeftest(model_r)
 ```{r}
 ggplot(data = pulse_fct, aes(x = Pulse1, y = Pulse2)) +
   geom_point() +
-  geom_smooth(method = 'lm')
+  geom_smooth(method = 'loess')
 ```
 
 * Упражнение 2.
@@ -204,11 +204,17 @@ D_i = \frac{\sum_{j=1}^n(\hat y_j - \hat y_j^{(-i)})^2}{k\hat\sigma^2},
 Затем визуилизируем получившиеся доверительные интервалы командой `sjp.lm()` из пакета `sjPlot`.
 
 ```{r}
-coefci(model_ur)
-plot_model(model_ur, ci.lvl = 0.9)
+coefci(model_ur, level = 0.8)
+plot_model(model_ur, type='std', ci.lvl = 0.9)
 ```
 
 - Загляните в справку :) Какая опция функции `coefci` отвечает за уровень доверия?
+
+
+Диагностика мультиколлинеарности. Коэффициенты вздутия дисперсии
+```{r}
+vif(model_ur)
+```
 
 * Упражнение 4.
 
