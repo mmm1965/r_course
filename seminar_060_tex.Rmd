@@ -1,0 +1,145 @@
+---
+title: "Семинар 6-тех. Красотища из латеха!"
+date: 'Июнь, 18, 2018'
+output:
+  pdf_document:
+    toc: false
+    toc_depth: 2
+    keep_tex: yes
+    number_sections: true
+    fig_width: 4
+    fig_height: 3
+    fig_caption: yes
+    highlight: tango
+    latex_engine: xelatex
+  word_document: default
+  html_document: default
+bibliography: references.bib
+lang: ru-RU
+mainfont: Arial
+fontsize: 11pt
+geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
+documentclass: article
+linkcolor: blue
+urlcolor: blue
+citecolor: blue
+header-includes:
+- \newfontfamily{\cyrillicfonttt}{Arial}
+- \newfontfamily{\cyrillicfont}{Arial}
+- \newfontfamily{\cyrillicfontsf}{Arial}
+- \usepackage{tabularx}
+- \usepackage{float}
+editor_options:
+  chunk_output_type: console
+---
+
+# Глобальные настройки
+
+* `echco = FALSE` не показывает чанки кода в готовом документе
+* `warning = FALSE` и `message = FALSE` не показывают сообщения и предупреждения
+* `incluse = FALSE` скроект вообще всё, что относится к коду, включая графики и таблицы
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+
+```{r}
+library(tidyverse) # манипуляции с данными и графики
+library(skimr) # описательные статистики
+library(rio) # импорт фантастического количества форматов данных
+library(huxtable) # красивые таблицы
+library(texreg) # ещё таблицы
+library(estimatr) # диагностика линейных моделей с робастными ошибками
+```
+
+# Таблицы
+
+Сравним ограниченную и неограниченную модели с робастными ошибками по набору данных `pulse`.
+Первым шагом оценим их, а затем предадим обе модели списком функции `texreg` из одноимённого пакета.
+По умолчанию под коэффициентами будут отображаться доверительные интервалы.
+Чтобы вместо них увидеть стандартные ошибки, добавим аргумент `include.ci = FALSE`.
+
+В опциях для куска кода везде будум писать `results='asis'`.
+Без неё в pdf-документе будет отображаться не сама таблица, а команды из латеха, которые её создают.
+Также добавим название для чанка `tab_models`.
+
+```{r tab_models, results='asis'}
+pulse <- import('pulse.txt')
+pulse_fct <- pulse %>%
+  mutate_at(vars(-Weight, -Height, -Age, -Pulse1, -Pulse2), factor)
+
+model_r_rob <- lm_robust(data = pulse_fct, Pulse2 ~ Pulse1)
+model_ur_rob <- lm_robust(data = pulse_fct, Pulse2 ~ Weight + Pulse1 + Ran + Smokes)
+
+texreg(list(model_r_rob, model_ur_rob), include.ci = FALSE, caption = '\\label{tab:models} Сравнение ограниченной и неограниченной моделей')
+```
+
+Функции `texreg` мы передали аргумент `caption`, в котором задали метку для созданной таблицы.
+Теперь на неё можно ссылаться.
+Да, на Таблицу \ref{tab:models} со сравнением моделей!
+
+Табличку с описательными статистиками можно тоже получить в латехе.
+Для этого применим к ней функцию `print_latex()` из пакета `huxtable`.
+
+```{r results='asis'}
+h_desc <- skim_to_wide(diamonds) %>%
+  filter(type != 'factor') %>%
+  select(variable, complete, mean, sd, p0, p50) %>%
+  hux(add_colnames = TRUE)
+
+caption(h_desc) <- '\\label{tab:desc_tab}Таблица с описательными статистиками'
+print_latex(h_desc)
+```
+
+Таким же образом выведем таблицу с корреляциями!
+И будем ссылаться на неё как на Таблицу \ref{tab:desc_tab}.
+
+То же самое сработает и с табличкой корреляций.
+
+```{r results='asis'}
+diamoinds_num <- diamonds %>%
+  subset(select = -c(cut, color, clarity))
+diamonds_cor <- cor(diamoinds_num) %>% round(2)
+
+d_hux <- as_hux(diamonds_cor) %>%
+  set_background_color(where(abs(diamonds_cor) > 0.95 &
+                               row(diamonds_cor) != col(diamonds_cor)), 'red') %>%
+  set_text_color(where(row(diamonds_cor) == col(diamonds_cor)), 'grey')
+
+d_hux <- d_hux %>%
+      huxtable::add_rownames() %>% # добавляем названия строк
+      huxtable::add_colnames() %>% # добавляем названия столбцов
+      set_caption('\\label{tab:corr_tab} Корреляции признаков бриллиантов') %>% # добавляем название таблицы
+      set_bold(1, everywhere, TRUE) %>% # жирный шрифт
+      set_italic(everywhere, 1, TRUE) %>% # курсив
+      set_all_borders(0.5) # границы таблицы
+
+d_hux
+```
+
+
+# Графики
+
+Теперь нарисуем грфик для парной регрессии с прошлого семинара.
+В настройках чанка укажем несколько опций:
+
+- `fig.width` — меняет ширину картинки
+
+- `fig.height` — меняет её длину
+
+- `fig.align` — отвечает за расположение картинки на странице, возможны опции
+`center`, `left`и `right`.
+
+```{r reg_plot, fig.width=3, fig.height=3, fig.align='center', fig.cap='\\label{fig:fig1} Регрессия пульса до упражнений на пульс после', results='asis', out.extra=''}
+ggplot(data = pulse_fct, aes(x = Pulse1, y = Pulse2)) +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
+
+Рисункки будут нумероваться отдельно от таблиц.
+Поэтому при ссылке на Рисунок \ref{fig:reg_plot} мы увидим первый номер.
+
+Упомянем наши источники, чтобы они появились в библиографии: @afanasyev92, @cobb2011teaching, @microsoftProject2008, @doe:website.
+
+# Библиография
