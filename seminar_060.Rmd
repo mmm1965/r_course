@@ -2,6 +2,7 @@
 title: 'Семинар 6. Красотища'
 date: 'Июнь, 18, 2018'
 output:
+  Word_document:
   html_document:
     keep_md: no
     number_sections: yes
@@ -37,6 +38,7 @@ library(huxtable) # красивые таблички в html, tex
 library(stargazer) # красивые таблички в html, tex
 library(texreg) # и снова красивые таблички в html, tex :)
 library(estimatr) # модели с робастными ошибками
+library(leaflet)
 ```
 
 Заметим, что в данном случае, важно, какой пакет подключать раньше, `AER`, или `Ecdat`.
@@ -66,18 +68,20 @@ pulse_fct <- pulse %>%
 ```{r}
 model_r <- lm(data = pulse_fct, Pulse2 ~ Pulse1)
 model_ur <- lm(data = pulse_fct, Pulse2 ~ Weight + Pulse1 + Ran + Smokes)
+summary(model_ur)
 ```
 
 Способ с переоцениванием модели:
 ```{r}
 model_r_rob <- lm_robust(data = pulse_fct, Pulse2 ~ Pulse1)
-model_ur_rob <- lm_robust(data = pulse_fct, Pulse2 ~ Weight + Pulse1 + Ran + Smokes)
+model_ur_rob <- lm_robust(data = pulse_fct, Pulse2 ~ Weight + Pulse1 + Ran + Smokes, se_type = "HC1")
+summary(model_ur_rob)
 ```
 
 Проверка гипотез и доверительные интервалы с робастно оценёнными моделями:
 ```{r}
 coeftest(model_ur_rob)
-coefci(model_ur_rob)
+coefci(model_ur_rob, level = 0.9)
 ```
 
 Сравнение двух робастно оценённых моделей:
@@ -119,6 +123,14 @@ waldtest(model_r, model_ur, vcov = vcovHC)
 # waldtest(___, ___, vcov =  vcovHC)
 ```
 
+Тест на гкткроскедастичность
+
+```{r}
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+```
 
 
 # Инструментальные переменные
@@ -308,6 +320,7 @@ ggplot(data = pulse_fct, aes(x = Pulse1, y = Pulse2)) +
 
 Другие стилевые заготовки для оформления цитат можно скачать в архиве [zotero](https://www.zotero.org/styles).
 
+Сошлемся на Эйнштейна, @einstein1916foundation
 
 Примеры таблиц для html с [пакетом huxtable](https://hughjonesd.github.io/huxtable/), интерактивные элементы, например, карты, с [htmlwidgets](http://gallery.htmlwidgets.org).
 

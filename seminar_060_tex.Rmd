@@ -65,7 +65,7 @@ library(estimatr) # диагностика линейных моделей с р
 Также добавим название для чанка `tab_models`.
 
 ```{r tab_models, results='asis'}
-pulse <- import('pulse.txt')
+pulse <- import('data/pulse.txt')
 pulse_fct <- pulse %>%
   mutate_at(vars(-Weight, -Height, -Age, -Pulse1, -Pulse2), factor)
 
